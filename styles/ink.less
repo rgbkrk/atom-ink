@@ -34,10 +34,14 @@ atom-text-editor::shadow {
   .highlight.error-line .region {
     background: fade(@background-color-error, 30%);
   }
-  
+
   .sk-folding-cube .sk-cube:before {
     background-color: @syntax-text-color!important;
   }
+}
+
+atom-overlay.ink {
+  max-width: 70%;
 }
 
 .ink.inline {
@@ -61,13 +65,18 @@ atom-text-editor::shadow {
   transition: all 0.2s;
   opacity: 1;
   cursor: default;
-  
-  max-width: 400px;
-  overflow: hidden;
-  white-space: pre;
-  
-  &:hover {
-    overflow: auto;
+
+  &.result {
+    overflow: hidden;
+    white-space: pre;
+
+    &:hover {
+      overflow: auto;
+    }
+  }
+
+  &.doc {
+
   }
 
   .fade {

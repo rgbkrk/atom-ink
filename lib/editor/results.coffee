@@ -40,6 +40,35 @@ module.exports =
     view.appendChild content
     view: view
 
+  doc: (ed, content) ->
+    view = document.createElement 'div'
+    view.classList.add 'ink', 'inline', 'doc'
+    view.style.position = 'relative'
+    view.style.pointerEvents = 'auto'
+    view.appendChild content
+    view: view
+
+  toggleDocs: (ed, range, {content}) ->
+    mark = ed.markBufferRange range
+    od = ed.findMarkers().filter((m)->m.doc? &&
+                                 m.getBufferRange().intersectsWith(range))
+                    .map((m)->m.doc)
+    if od.length > 0
+      od.map((m)->m.destroy())
+      return
+    result = @doc ed, content
+    mark.doc = result
+    result.editor = ed
+    result.marker = mark
+    result.text = @text result
+    result.decorator = ed.decorateMarker mark,
+      type: 'overlay'
+      item: result.view
+      class: 'ink'
+    result.ownsMark = true
+    result.destroy = => @remove result
+    result.view.result = result
+
   methods: (r) ->
     r.view.result = r
     r.destroy = => @remove r
@@ -58,6 +87,7 @@ module.exports =
     result.decorator = ed.decorateMarker mark,
       type: 'overlay'
       item: result.view
+      class: 'ink'
     @methods result
     setTimeout (->
       result.view.parentElement.style.pointerEvents = 'none'
