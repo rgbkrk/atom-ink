@@ -58,6 +58,7 @@ module.exports =
     result.decorator = ed.decorateMarker mark,
       type: 'overlay'
       item: result.view
+      class: 'inkLimited'
     @methods result
     setTimeout (->
       result.view.parentElement.style.pointerEvents = 'none'

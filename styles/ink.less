@@ -34,10 +34,15 @@ atom-text-editor::shadow {
   .highlight.error-line .region {
     background: fade(@background-color-error, 30%);
   }
-  
+
   .sk-folding-cube .sk-cube:before {
     background-color: @syntax-text-color!important;
   }
+}
+
+atom-overlay.inkLimited {
+  max-width: 60%;
+  max-height: 60%;
 }
 
 .ink.inline {
@@ -61,13 +66,14 @@ atom-text-editor::shadow {
   transition: all 0.2s;
   opacity: 1;
   cursor: default;
-  
-  max-width: 400px;
-  overflow: hidden;
-  white-space: pre;
-  
-  &:hover {
-    overflow: auto;
+
+  &.result {
+    overflow: hidden;
+    white-space: pre;
+
+    &:hover {
+      overflow: auto;
+    }
   }
 
   .fade {
@@ -82,8 +88,6 @@ atom-text-editor::shadow {
     opacity: 0.5;
   }
   > .tree > .body {
-    max-width: 500px;
-    max-height: 250px;
     overflow: auto;
   }
 }
