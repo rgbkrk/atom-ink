@@ -52,20 +52,21 @@ class Console
 
   @buffer: (f) ->
     buffer = []
-    flush = @debounce 10, ->
-      f.call this, buffer.join('').trim()
+    flush = @debounce 50, ->
+      f.call this, buffer.join('')
+      @view.limitHistory()
       buffer = []
     (s) ->
       buffer.push(s)
       flush.call this
 
-  out: @buffer (s) -> @view.add @view.outView(s), @isInput
+  out: @buffer (s) -> @view.outView(s)
 
-  err: @buffer (s) -> @view.add @view.errView(s), @isInput
+  err: @buffer (s) -> @view.errView(s)
 
-  info: @buffer (s) -> @view.add @view.infoView(s), @isInput
+  info: @buffer (s) -> @view.infoView(s)
 
-  result: (r, opts) -> @view.add @view.resultView(r, opts), @isInput
+  result: (r, opts) -> @view.addItem @view.resultView(r, opts), @isInput
 
   clear: ->
     @done()

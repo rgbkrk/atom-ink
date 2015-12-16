@@ -9,6 +9,7 @@ class ConsoleView extends ScrollView
         @div class: 'gutter'
         @div class: 'items-scroll', =>
           @div class: 'items'
+          @div class: 'input'
           @div class: 'spacer'
 
   initialize: ->
@@ -25,7 +26,7 @@ class ConsoleView extends ScrollView
   getIconName: ->
     "terminal"
 
-  addItem: (view, {divider}={divider:true}) ->
+  addItem: (view, {divider}={divider:false}) ->
     scroll = @shouldScroll()
     @fadeIn view
     @items.appendChild view
@@ -34,13 +35,13 @@ class ConsoleView extends ScrollView
     view
 
   getInput: ->
-    items = @items.querySelectorAll '.cell'
+    items = @items.querySelectorAll '.input'
     items[items.length-1]
 
   getInputEd: ->
     @getInput()?.querySelector('atom-text-editor')?.getModel()
 
-  addBeforeInput: (view, {divider}={divider:true}) ->
+  addBeforeInput: (view, {divider}={divider:false}) ->
     if @shouldScroll() then @lock 200
     @items.insertBefore view, @getInput()
     if divider then @divider(true)
@@ -52,6 +53,10 @@ class ConsoleView extends ScrollView
       @addItem item, opts
     else
       @addBeforeInput item, opts
+
+  limitHistory: (maxSize = 1000) ->
+    while @items.childNodes.length > maxSize
+      @items.removeChild @items.firstChild
 
   divider: (input) ->
     d = document.createElement 'div'
@@ -86,16 +91,48 @@ class ConsoleView extends ScrollView
     cell.appendChild content
     cell
 
-  streamView: (text, type, icon) ->
-    out = document.createElement 'div'
+  appendToLastOut: (text) ->
+    out = document.createElement 'span'
     out.style.fontSize = atom.config.get('editor.fontSize') + 'px'
     out.style.fontFamily = atom.config.get('editor.fontFamily')
     out.innerText = text
+    @items.lastChild.lastChild.appendChild(out)
+
+  createNewOut: (text, type, icon) ->
+    out = document.createElement 'div'
+    out.style.fontSize = atom.config.get('editor.fontSize') + 'px'
+    out.style.fontFamily = atom.config.get('editor.fontFamily')
+    inner = document.createElement 'span'
+    inner.innerText = text
+    out.appendChild(inner)
     out.classList.add type, 'stream'
-    @cellView out,
+    @items.appendChild @cellView out,
       icon: icon
 
-  outView: (s) -> @streamView s, 'output', 'quote'
+  lastType = ""
+
+  streamView: (text, type, icon) ->
+    if text.indexOf('\n') >= 0
+      text = text.split('\n')
+      if @lastType == type && type == 'output'
+        @appendToLastOut text[0]
+        i = 0
+      else
+        i = 1
+
+      for line in text
+        if i == 0
+          i = i + 1
+          continue
+        @createNewOut line, type, icon
+        i = i+1
+    else if @lastType == type && type == 'output'
+      @appendToLastOut text
+    else
+      @createNewOut line, type, icon
+    @lastType = type
+
+  outView: (s) -> @streamView s, 'output', ''
 
   errView: (s) -> @streamView s, 'err', 'alert'
 
@@ -158,7 +195,7 @@ class ConsoleView extends ScrollView
   loading: (l) ->
     if l
       @loading false
-      @items.querySelector('.divider:last-child').classList.add 'loading'
+      @items.querySelector('.divider:last-child')?.classList.add 'loading'
     else
       @items.querySelector('.divider.loading')?.classList.remove 'loading'
 
