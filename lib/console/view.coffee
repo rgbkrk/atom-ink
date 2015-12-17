@@ -54,7 +54,7 @@ class ConsoleView extends ScrollView
     else
       @addBeforeInput item, opts
 
-  limitHistory: (maxSize = 1000) ->
+  limitHistory: (maxSize = 10000) ->
     while @items.childNodes.length > maxSize
       @items.removeChild @items.firstChild
 
