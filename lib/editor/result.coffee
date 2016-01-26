@@ -3,6 +3,26 @@
 
 module.exports =
 class Result
+  constructor: (@editor, range, opts={}) ->
+    # default to inline results:
+    if not opts.type then opts.type = 'inline'
+    @disposables = new CompositeDisposable
+    @createView opts
+    @initMarker range, opts.type
+    @type = opts.type
+    @text = @getText()
+    @disposables.add @editor.onDidChange (e) => @validateText e
+
+  createView: (opts) ->
+    switch opts.type
+      when 'inline' then @inlineView opts
+      when 'block' then @blockView opts
+
+  initMarker: (range, type) ->
+    switch type
+      when 'inline' then @initInlineMarker range
+      when 'block' then @initBlockMarker range
+
   fadeIn: ->
     @view.classList.add 'ink-hide'
     @timeout 20, =>
@@ -27,10 +47,32 @@ class Result
     fade and @fadeIn()
     if content? then @view.appendChild content
 
+  blockView: ({error, content, fade}) ->
+    @view = document.createElement 'div'
+    @view.classList.add 'ink', 'under', 'result'
+    if error then @view.classList.add 'error'
+    # @view.style.pointerEvents = 'auto'
+    @view.addEventListener 'mousewheel', (e) ->
+      e.stopPropagation()
+    @disposables.add atom.commands.add @view,
+      'inline-results:clear': (e) => @remove()
+    fade and @fadeIn()
+    if content? then @view.appendChild content
+
   lineRange: (start, end) ->
     [[start, 0], [end, @editor.lineTextForBufferRow(end).length]]
 
-  initMarker: ([start, end]) ->
+  initBlockMarker: ([start, end]) ->
+    @marker = @editor.markBufferRange @lineRange(start, end),
+      persistent: false
+    @marker.result = @
+    @editor.decorateMarker @marker,
+      type: 'block'
+      item: @view
+      position: 'after'
+    @disposables.add @marker.onDidChange (e) => @checkMarker e
+
+  initInlineMarker: ([start, end]) ->
     @marker = @editor.markBufferRange @lineRange(start, end),
       persistent: false
     @marker.result = @
@@ -38,13 +80,6 @@ class Result
       type: 'overlay'
       item: @view
     @disposables.add @marker.onDidChange (e) => @checkMarker e
-
-  constructor: (@editor, range, opts={}) ->
-    @disposables = new CompositeDisposable
-    @inlineView opts
-    @initMarker range
-    @text = @getText()
-    @disposables.add @editor.onDidChange (e) => @validateText e
 
   remove: ->
     @view.classList.add 'ink-hide'
@@ -87,13 +122,14 @@ class Result
 
   # Bulk Actions
 
-  @forLines: (ed, start, end) ->
+  @forLines: (ed, start, end, type = 'any') ->
     ed.findMarkers().filter((m)->m.result? &&
-                                 m.getBufferRange().intersectsRowRange(start, end))
+                                 m.getBufferRange().intersectsRowRange(start, end) &&
+                                 (m.result.type == type || type == 'any'))
                     .map((m)->m.result)
 
-  @removeLines: (ed, start, end) ->
-    rs = @forLines(ed, start, end)
+  @removeLines: (ed, start, end, type = 'any') ->
+    rs = @forLines(ed, start, end, type)
     rs.map (r) -> r.remove()
     rs.length > 0
 
