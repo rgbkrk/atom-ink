@@ -3,7 +3,7 @@ http = require 'http'
 Loading = require './util/loading'
 block   = require './editor/block'
 highlights = require './editor/highlights'
-Result = require './editor/result'
+results = require './editor/results'
 Spinner = require './editor/spinner'
 Console = require './console/console'
 tree    = require './tree'
@@ -16,7 +16,7 @@ module.exports = Ink =
       description: 'Display results in your editor\'s monotype font'
 
   activate: ->
-    Result.activate()
+    results.activate()
     Console.activate()
 
     edId = 1
@@ -37,7 +37,9 @@ module.exports = Ink =
       block.highlight ed, start, end
     Loading: Loading
     Spinner: Spinner
-    Result: Result
+    results: results
+    inlineResult: require './editor/inlineResult'
+    blockResult: require './editor/blockResult'
     Console: Console
     highlights: highlights
     tree: tree
